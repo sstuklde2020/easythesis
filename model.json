@@ -1,0 +1,783 @@
+{
+  "entities": [
+    {
+      "id": "CH1",
+      "type": "Chapter",
+      "label": "Introduction",
+      "lane": "Structure"
+    },
+    {
+      "id": "CH2",
+      "type": "Chapter",
+      "label": "Background & Related Work",
+      "lane": "Structure"
+    },
+    {
+      "id": "CH3",
+      "type": "Chapter",
+      "label": "Approach",
+      "lane": "Structure"
+    },
+    {
+      "id": "CH4",
+      "type": "Chapter",
+      "label": "Evaluation",
+      "lane": "Structure"
+    },
+    {
+      "id": "CH5",
+      "type": "Chapter",
+      "label": "Conclusion",
+      "lane": "Structure"
+    },
+    {
+      "id": "S1",
+      "type": "Section",
+      "label": "Motivation",
+      "lane": "Structure"
+    },
+    {
+      "id": "S2",
+      "type": "Section",
+      "label": "Problem Statement",
+      "lane": "Structure"
+    },
+    {
+      "id": "S3",
+      "type": "Section",
+      "label": "Research Questions",
+      "lane": "Structure"
+    },
+    {
+      "id": "S4",
+      "type": "Section",
+      "label": "Contributions",
+      "lane": "Structure"
+    },
+    {
+      "id": "T1",
+      "type": "Topic",
+      "label": "Service-Oriented Architecture for Industrial Automation",
+      "lane": "Domain"
+    },
+    {
+      "id": "T2",
+      "type": "Topic",
+      "label": "IEC 61499 and Function Blocks",
+      "lane": "Domain"
+    },
+    {
+      "id": "T3",
+      "type": "Topic",
+      "label": "Variability & Maintainability",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_2.2",
+      "type": "Domain",
+      "label": "Choreography",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_2.1",
+      "type": "Domain",
+      "label": "Orchestration",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_1_Int",
+      "type": "Domain",
+      "label": "Interfaces",
+      "lane": "Domain"
+    },
+    {
+      "id": "D1.I3",
+      "type": "Concept",
+      "label": "Adapter Interfaces",
+      "lane": "Domain"
+    },
+    {
+      "id": "P1",
+      "type": "Problem",
+      "label": "Legacy Control Software has Complex Structure and Hierarchies.",
+      "lane": "Problem"
+    },
+    {
+      "id": "CSE1",
+      "type": "Cause",
+      "label": "Poor encapsulation",
+      "lane": "Problem"
+    },
+    {
+      "id": "CSE2",
+      "type": "Cause",
+      "label": "High component interdependency",
+      "lane": "Problem"
+    },
+    {
+      "id": "CSE3",
+      "type": "Cause",
+      "label": "Large orchestrator / central control",
+      "lane": "Problem"
+    },
+    {
+      "id": "RQ1",
+      "type": "Research Question",
+      "label": "How can maintainability be improved under variability in IEC 61499?",
+      "lane": "ResearchQuestion"
+    },
+    {
+      "id": "RQ2",
+      "type": "Research Question",
+      "label": "Which methods can identify and classify variable artifacts in control software variants?",
+      "lane": "ResearchQuestion"
+    },
+    {
+      "id": "M1",
+      "type": "Method",
+      "label": "Typed template + knowledge graph for variability-driven refactoring",
+      "lane": "Contribution"
+    },
+    {
+      "id": "A1",
+      "type": "Artifact",
+      "label": "Dash + Cytoscape model editor (this tool)",
+      "lane": "Contribution"
+    },
+    {
+      "id": "DP1",
+      "type": "DesignPattern",
+      "label": "Composite (IEC 61499 customization)",
+      "lane": "Contribution"
+    },
+    {
+      "id": "DP2",
+      "type": "DesignPattern",
+      "label": "Adapter (rotary-to-boolean adaptation)",
+      "lane": "Contribution"
+    },
+    {
+      "id": "EVAL1",
+      "type": "Evidence",
+      "label": "Case study: 6 variants; counts of Core vs VariantSpecific FB/Data/Event",
+      "lane": "Evaluation"
+    },
+    {
+      "id": "B1",
+      "type": "Benefit",
+      "label": "Reduced modification effort",
+      "lane": "Contribution"
+    },
+    {
+      "id": "B2",
+      "type": "Benefit",
+      "label": "Improved traceability of design decisions",
+      "lane": "Contribution"
+    },
+    {
+      "id": "FIG_OVERVIEW",
+      "type": "Figure",
+      "label": "Thesis overview diagram",
+      "lane": "Structure"
+    },
+    {
+      "id": "FIG_RW",
+      "type": "Figure",
+      "label": "Related work map (papers → topics → gaps)",
+      "lane": "Structure"
+    },
+    {
+      "id": "PW2",
+      "type": "Paper",
+      "label": "AuthorYear — Paper Title 1",
+      "lane": "RelatedWork"
+    },
+    {
+      "id": "PW3",
+      "type": "Paper",
+      "label": "AuthorYear — Paper Title 3",
+      "lane": "RelatedWork"
+    },
+    {
+      "id": "G1",
+      "type": "Gap",
+      "label": "Lack of design guidelines for handling variability cases in IEC 61499",
+      "lane": "RelatedWork"
+    },
+    {
+      "id": "VC1",
+      "type": "Variability Case",
+      "label": "Sequence change",
+      "lane": "Variability Case"
+    },
+    {
+      "id": "VC2",
+      "type": "Variability Case",
+      "label": "Type change",
+      "lane": "Variability Case"
+    },
+    {
+      "id": "VC3",
+      "type": "Variability Case",
+      "label": "Type removed",
+      "lane": "Variability Case"
+    },
+    {
+      "id": "RQ3",
+      "type": "Research Question",
+      "label": "How to evaluate the effectiveness and usefulness of developed variable control software design?",
+      "lane": "ResearchQuestion"
+    },
+    {
+      "id": "P2",
+      "type": "Problem",
+      "label": "Clone and Own to create new control software variants",
+      "lane": "Problem"
+    },
+    {
+      "id": "P3",
+      "type": "Problem",
+      "label": "Modeling Variability, Managing Interaction and Configuring Variants!",
+      "lane": "Problem"
+    },
+    {
+      "id": "P4",
+      "type": "Problem",
+      "label": "Challenges related to Visualization, Tracking and Representation of Variability",
+      "lane": "Problem"
+    },
+    {
+      "id": "CS2",
+      "type": "CaseStudy",
+      "label": "HorizontalAxisVariants",
+      "lane": "CaseStudy"
+    },
+    {
+      "id": "CS1",
+      "type": "CaseStudy",
+      "label": "CappingStationVariants",
+      "lane": "CaseStudy"
+    },
+    {
+      "id": "CS3",
+      "type": "CaseStudy",
+      "label": "AnalogInputSensorVariants",
+      "lane": "CaseStudy"
+    },
+    {
+      "id": "CS4",
+      "type": "CaseStudy",
+      "label": "AnalogInputSensorDesignVariants",
+      "lane": "CaseStudy"
+    },
+    {
+      "id": "Dom_1.FB",
+      "type": "Domain",
+      "label": "FB",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_1.FB1",
+      "type": "Domain",
+      "label": "BasicFB",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_1.FB2",
+      "type": "Domain",
+      "label": "CompositeFB",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_1.FB3",
+      "type": "Domain",
+      "label": "SubapplicationFB",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_1_Int1",
+      "type": "Domain",
+      "label": "Discrete Interfaces",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_1_Int3",
+      "type": "Domain",
+      "label": "Adapter Interfaces",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_1_Int2",
+      "type": "Domain",
+      "label": "Structs Interfaces",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_1",
+      "type": "Domain",
+      "label": "IEC 61499",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_2",
+      "type": "Domain",
+      "label": "Interaction Pattern",
+      "lane": "Domain"
+    },
+    {
+      "id": "Dom_",
+      "type": "Domain",
+      "label": "Domain",
+      "lane": "Domain"
+    }
+  ],
+  "relations": {
+    "CONTAINS": {
+      "sub_types": [
+        "Chapter",
+        "Section",
+        "Topic"
+      ],
+      "obj_types": [
+        "Section",
+        "Subsection",
+        "Topic",
+        "Concept"
+      ],
+      "kind": "binary"
+    },
+    "DEFINED_BY": {
+      "sub_types": [
+        "Concept",
+        "Topic"
+      ],
+      "obj_types": [
+        "Definition"
+      ],
+      "kind": "binary"
+    },
+    "ILLUSTRATED_BY": {
+      "sub_types": [
+        "Chapter",
+        "Section",
+        "Topic",
+        "Method",
+        "Problem"
+      ],
+      "obj_types": [
+        "Figure"
+      ],
+      "kind": "binary"
+    },
+    "DISCUSSES": {
+      "sub_types": [
+        "Paper"
+      ],
+      "obj_types": [
+        "Topic",
+        "Concept",
+        "Problem",
+        "Gap"
+      ],
+      "kind": "binary"
+    },
+    "PROPOSES": {
+      "sub_types": [
+        "Paper"
+      ],
+      "obj_types": [
+        "Method",
+        "Model",
+        "Artifact"
+      ],
+      "kind": "binary"
+    },
+    "REPORTS": {
+      "sub_types": [
+        "Paper"
+      ],
+      "obj_types": [
+        "Evidence"
+      ],
+      "kind": "binary"
+    },
+    "HAS_GAP": {
+      "sub_types": [
+        "Topic",
+        "Problem"
+      ],
+      "obj_types": [
+        "Gap"
+      ],
+      "kind": "binary"
+    },
+    "MOTIVATES": {
+      "sub_types": [
+        "Gap",
+        "Problem"
+      ],
+      "obj_types": [
+        "Research Question"
+      ],
+      "kind": "binary"
+    },
+    "ADDRESSED_BY": {
+      "sub_types": [
+        "Research Question",
+        "Problem"
+      ],
+      "obj_types": [
+        "Method"
+      ],
+      "kind": "binary"
+    },
+    "CAUSES": {
+      "sub_types": [
+        "Problem"
+      ],
+      "obj_types": [
+        "Cause"
+      ],
+      "kind": "binary"
+    },
+    "REQUIRES": {
+      "sub_types": [
+        "Method"
+      ],
+      "obj_types": [
+        "Artifact",
+        "Requirement"
+      ],
+      "kind": "binary"
+    },
+    "EVALUATED_BY": {
+      "sub_types": [
+        "Method"
+      ],
+      "obj_types": [
+        "Evidence"
+      ],
+      "kind": "binary"
+    },
+    "LEADS_TO": {
+      "sub_types": [
+        "Method"
+      ],
+      "obj_types": [
+        "Benefit"
+      ],
+      "kind": "binary"
+    },
+    "PROVIDES": {
+      "sub_types": [
+        "Architecture",
+        "Standard",
+        "DesignPattern",
+        "Method"
+      ],
+      "obj_types": [
+        "Design",
+        "DesignElement",
+        "Solution",
+        "Artifact"
+      ],
+      "kind": "binary"
+    },
+    "FACES": {
+      "sub_types": [
+        "Design",
+        "Problem",
+        "Topic"
+      ],
+      "obj_types": [
+        "Problem"
+      ],
+      "kind": "faces"
+    },
+    "SOLVES": {
+      "sub_types": [
+        "DesignPattern",
+        "Method"
+      ],
+      "obj_types": [
+        "Problem"
+      ],
+      "kind": "solves"
+    },
+    "REFACTORS_TO": {
+      "sub_types": [
+        "DesignPattern",
+        "Method"
+      ],
+      "obj_types": [
+        "Design"
+      ],
+      "kind": "refactors"
+    },
+    "EXISTS_IN_TO_FULFILL": {
+      "sub_types": [
+        "VariabilityCase"
+      ],
+      "obj_types": [
+        "Requirement"
+      ],
+      "kind": "exists"
+    },
+    "OFFERS": {
+      "sub_types": [
+        "Method",
+        "Design"
+      ],
+      "obj_types": [
+        "Benefit"
+      ],
+      "kind": "binary"
+    },
+    "DESIGNED_WITH": {
+      "sub_types": [
+        "Design",
+        "RefactoredDesign"
+      ],
+      "obj_types": [
+        "DesignElement"
+      ],
+      "kind": "binary"
+    },
+    "HAS": {
+      "sub_types": [
+        "Domain"
+      ],
+      "obj_types": [
+        "Domain"
+      ],
+      "kind": "binary"
+    },
+    "FROM": {
+      "sub_types": [
+        "CaseStudy"
+      ],
+      "obj_types": [
+        "CaseStudy"
+      ],
+      "kind": "binary"
+    }
+  },
+  "facts": [
+    {
+      "pred": "CONTAINS",
+      "sub": "CH1",
+      "obj": "S1",
+      "mods": {}
+    },
+    {
+      "pred": "CONTAINS",
+      "sub": "CH1",
+      "obj": "S2",
+      "mods": {}
+    },
+    {
+      "pred": "CONTAINS",
+      "sub": "CH1",
+      "obj": "S3",
+      "mods": {}
+    },
+    {
+      "pred": "CONTAINS",
+      "sub": "CH1",
+      "obj": "S4",
+      "mods": {}
+    },
+    {
+      "pred": "ILLUSTRATED_BY",
+      "sub": "CH2",
+      "obj": "FIG_RW",
+      "mods": {}
+    },
+    {
+      "pred": "CONTAINS",
+      "sub": "CH2",
+      "obj": "T1",
+      "mods": {}
+    },
+    {
+      "pred": "CONTAINS",
+      "sub": "CH2",
+      "obj": "T2",
+      "mods": {}
+    },
+    {
+      "pred": "CONTAINS",
+      "sub": "CH2",
+      "obj": "T3",
+      "mods": {}
+    },
+    {
+      "pred": "CONTAINS",
+      "sub": "T2",
+      "obj": "D1.I3",
+      "mods": {}
+    },
+    {
+      "pred": "HAS_GAP",
+      "sub": "T3",
+      "obj": "G1",
+      "mods": {}
+    },
+    {
+      "pred": "MOTIVATES",
+      "sub": "G1",
+      "obj": "RQ1",
+      "mods": {}
+    },
+    {
+      "pred": "ADDRESSED_BY",
+      "sub": "RQ1",
+      "obj": "M1",
+      "mods": {}
+    },
+    {
+      "pred": "PROVIDES",
+      "sub": "M1",
+      "obj": "A1",
+      "mods": {}
+    },
+    {
+      "pred": "EVALUATED_BY",
+      "sub": "M1",
+      "obj": "EVAL1",
+      "mods": {}
+    },
+    {
+      "pred": "LEADS_TO",
+      "sub": "M1",
+      "obj": "B1",
+      "mods": {}
+    },
+    {
+      "pred": "LEADS_TO",
+      "sub": "M1",
+      "obj": "B2",
+      "mods": {}
+    },
+    {
+      "pred": "CAUSES",
+      "sub": "P1",
+      "obj": "CSE1",
+      "mods": {}
+    },
+    {
+      "pred": "CAUSES",
+      "sub": "P1",
+      "obj": "CSE2",
+      "mods": {}
+    },
+    {
+      "pred": "CAUSES",
+      "sub": "P1",
+      "obj": "CSE3",
+      "mods": {}
+    },
+    {
+      "pred": "DISCUSSES",
+      "sub": "PW2",
+      "obj": "T2",
+      "mods": {}
+    },
+    {
+      "pred": "DISCUSSES",
+      "sub": "PW3",
+      "obj": "T3",
+      "mods": {}
+    },
+    {
+      "pred": "FROM",
+      "sub": "CS1",
+      "obj": "CS2",
+      "mods": {}
+    },
+    {
+      "pred": "FROM",
+      "sub": "CS2",
+      "obj": "CS3",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_1.FB",
+      "obj": "Dom_1.FB1",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_1.FB",
+      "obj": "Dom_1.FB2",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_1.FB",
+      "obj": "Dom_1.FB3",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_1_Int",
+      "obj": "Dom_1_Int1",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_1_Int",
+      "obj": "Dom_1_Int3",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_1_Int",
+      "obj": "Dom_1_Int2",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_1",
+      "obj": "Dom_1_Int",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_1",
+      "obj": "Dom_1.FB",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_2",
+      "obj": "Dom_2.1",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_2",
+      "obj": "Dom_2.2",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_",
+      "obj": "Dom_1",
+      "mods": {}
+    },
+    {
+      "pred": "HAS",
+      "sub": "Dom_",
+      "obj": "Dom_2",
+      "mods": {}
+    },
+    {
+      "pred": "FROM",
+      "sub": "CS3",
+      "obj": "CS4",
+      "mods": {}
+    }
+  ]
+}
