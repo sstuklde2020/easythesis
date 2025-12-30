@@ -2,25 +2,29 @@ import json
 from pathlib import Path
 from copy import deepcopy
 from datetime import datetime
+import os
 
 import dash
 from dash import html, dcc, Input, Output, State, callback_context
 import dash_cytoscape as cyto
 from dash import dash_table
 
+BUILD_TAG = "lane-filter-v1"
+print(f"=== BUILD {BUILD_TAG} ===")
+print("FILE PATH:", __file__)
+print("=== RUNNING THIS FILE ===")
+print("FILE PATH:", __file__)
+
 cyto.load_extra_layouts()
 
-BASE_DIR = Path("/content/drive/MyDrive/ColabNotebooks/my_vocab1")
+# Bump this whenever you ship a new file so it's obvious which version is running.
+APP_VERSION = "lanefilter-fix-2"
+
+BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "model.json"
 GRAPHML_OUT = BASE_DIR / "model.graphml"
 GRAPHML_FOCUS_OUT = BASE_DIR / "model_focus.graphml"
 BACKUP_DIR = BASE_DIR / "model_backups"
-
-#MODEL_PATH = Path("/content/drive/MyDrive/ColabNotebooks/why_vocab1/model.json")
-#GRAPHML_OUT = Path("/content/drive/MyDrive/ColabNotebooks/why_vocab1/model.graphml")
-#GRAPHML_FOCUS_OUT = Path("/content/drive/MyDrive/ColabNotebooks/why_vocab1/model_focus.graphml")
-#BACKUP_DIR = Path("/content/drive/MyDrive/ColabNotebooks/why_vocab1/model_backups")
-
 
 DEFAULT_RELATIONS = {
     "PROVIDES": {"sub_types": ["Architecture", "Standard", "DesignPattern"], "obj_types": ["Design", "DesignElement", "Solution"], "kind": "binary"},
@@ -679,6 +683,8 @@ entities_panel = html.Div(
     style={"display": "none"},
     children=[
         html.H4("Entities"),
+        html.Div(f"Build: {BUILD_TAG}", style={"fontSize":"12px","opacity":0.7,"marginBottom":"6px"}),
+        dcc.Dropdown(id="ent_lane_filter", multi=True, placeholder="Filter entities by lane (optional)", style={"marginBottom":"6px"}),
         dcc.Dropdown(id="ent_select", placeholder="Select entity"),
         dcc.Input(id="ent_id", placeholder="ID (rename supported)", style={"width": "100%", "marginTop": "6px"}),
         dcc.Input(id="ent_type", placeholder="Type", style={"width": "100%", "marginTop": "6px"}),
@@ -731,6 +737,10 @@ app.layout = html.Div(
             style={"border":"1px solid #ddd","borderRadius":"12px","padding":"12px"},
             children=[
                 html.H3("Editor"),
+                html.Div(
+                    f"Running: {Path(__file__).name} • {APP_VERSION} • {BASE_DIR}",
+                    style={"fontSize":"11px","opacity":0.7,"marginTop":"-6px","marginBottom":"6px"},
+                ),
                 html.Div(id="status", style={"whiteSpace":"pre-wrap","fontSize":"13px"}),
                 dcc.Tabs(
                     id="tabs", value="tab_view",
@@ -863,14 +873,14 @@ app.layout = html.Div(
                     ],
                 ),
 
-                dcc.Store(id="store_model", data=m0),
+                dcc.Store(id="store_model", data=m0, storage_type="local"),
                 dcc.Store(id="store_filters", data={
                     "use_lanes": False, "node_label_mode":"id", "show_edge_mods": False,
                     "type_filter": [], "pred_filter": [], "search": "",
                     "show_node_labels": True, "show_edge_labels": True,
                     "focus_node": None, "focus_hops": 1, "focus_dir": "both",
                     "focus_include_mods": True, "show_mod_edges": False,
-                }),
+                }, storage_type="local"),
                 dcc.Store(id="store_sel", data={"edge": None, "tapped_node": None, "tapped_pos": None}),
                 dcc.Store(id="store_pick", data={"mode": None}),
                 dcc.Store(id="store_fact_edit", data={"index": None}),
@@ -946,6 +956,63 @@ def refresh_filter_options(m):
 
 
 @app.callback(
+    Output("ent_lane_filter","options"),
+    Input("store_model","data"),
+)
+def refresh_ent_lane_filter_options(m):
+    """Lane filter options.
+
+    Supports two data styles:
+      1) Lane-as-nodes: entities with type "LANE" (case-insensitive) or id starting with "LANE::".
+         In this case, the filter values are lane *entity ids*.
+      2) Lane-as-attribute: entities carry a free-text "lane" field.
+         In this case, the filter values are lane *strings*.
+    """
+
+    ents = m.get("entities") or []
+
+    def is_lane_node(e):
+        eid = (e.get("id") or "").strip()
+        et = (e.get("type") or "").strip().lower()
+        return et == "lane" or eid.startswith("LANE::")
+
+    lane_nodes = [e for e in ents if is_lane_node(e)]
+
+    # Style 1: lane-as-nodes
+    if lane_nodes:
+        lane_nodes = sorted(lane_nodes, key=lambda e: (e.get("id") or ""))
+        lane_opts = []
+        for e in lane_nodes:
+            eid = (e.get("id") or "").strip()
+            if not eid:
+                continue
+            lab = (e.get("label") or "").strip()
+            label = eid if not lab else f"{eid} — {lab}"
+            lane_opts.append({"label": label, "value": eid})
+
+        # Include an explicit "unassigned" choice if any non-lane entity is not connected to a lane node.
+        lane_ids = {o["value"] for o in lane_opts}
+        connected = set()
+        for f in (m.get("facts") or []):
+            s, o = f.get("sub"), f.get("obj")
+            if s in lane_ids and o:
+                connected.add(o)
+            if o in lane_ids and s:
+                connected.add(s)
+        non_lane_ids = { (e.get("id") or "").strip() for e in ents if (e.get("id") or "").strip() and not is_lane_node(e) }
+        if any(eid not in connected for eid in non_lane_ids):
+            lane_opts = [{"label": "(unassigned)", "value": "__NONE__"}] + lane_opts
+        return lane_opts
+
+    # Style 2: lane-as-attribute (fallback)
+    has_none = any(not (e.get("lane") or "").strip() for e in ents)
+    lane_opts = opts(lanes(m))
+    if has_none:
+        lane_opts = [{"label": "(no lane)", "value": "__NONE__"}] + lane_opts
+    return lane_opts
+
+
+@app.callback(
     Output("health","children"),
     Input("store_model","data"),
 )
@@ -1003,6 +1070,91 @@ def refresh_graph(m, filters):
 # -----------------------------
 @app.callback(
     Output("ent_select","options"),
+    Output("ent_select","value"),
+    Input("store_model","data"),
+    Input("ent_lane_filter","value"),
+    State("ent_select","value"),
+)
+def update_ent_select_options(m, ent_lane_filter, current_value):
+    # Filter ONLY the Entities selector by lane(s).
+    lane_filter_raw = ent_lane_filter or []
+    lane_filter = set(str(v).strip() for v in lane_filter_raw)
+
+    ents = m.get("entities") or []
+
+    def is_lane_node(e):
+        eid = (e.get("id") or "").strip()
+        et = (e.get("type") or "").strip().lower()
+        return et == "lane" or eid.startswith("LANE::")
+
+    lane_nodes = [e for e in ents if is_lane_node(e)]
+    lane_node_ids = { (e.get("id") or "").strip() for e in lane_nodes if (e.get("id") or "").strip() }
+
+    # If we have lane nodes and the filter values look like lane ids, use graph-based filtering.
+    use_lane_nodes = bool(lane_node_ids) and (not lane_filter or ("__NONE__" in lane_filter) or any(v in lane_node_ids for v in lane_filter))
+
+    entity_to_lanes = {}
+    if use_lane_nodes:
+        # Build 1-hop membership from facts.
+        for f in (m.get("facts") or []):
+            s, o = f.get("sub"), f.get("obj")
+            if s in lane_node_ids and o:
+                entity_to_lanes.setdefault(o, set()).add(s)
+            if o in lane_node_ids and s:
+                entity_to_lanes.setdefault(s, set()).add(o)
+
+    def lane_ok_entity(eid: str, lane_attr: str) -> bool:
+        if not lane_filter:
+            return True
+        if use_lane_nodes:
+            lanes_here = entity_to_lanes.get(eid, set())
+            if "__NONE__" in lane_filter and not lanes_here:
+                return True
+            return bool(lanes_here.intersection({v for v in lane_filter if v != "__NONE__"}))
+        # Fallback to lane-as-attribute
+        lane_attr = (lane_attr or "").strip()
+        if lane_attr == "" and "__NONE__" in lane_filter:
+            return True
+        return lane_attr in lane_filter
+
+    opts_list = []
+    for e in ents:
+        eid = (e.get("id") or "").strip()
+        if not eid:
+            continue
+
+        # Typically you don't want to pick the lane node itself as an "entity" to edit.
+        # If you do want that, remove this block.
+        if is_lane_node(e):
+            continue
+
+        lane_attr = (e.get("lane") or "").strip()
+        if not lane_ok_entity(eid, lane_attr):
+            continue
+
+        typ = (e.get("type") or "?").strip()
+        lab = (e.get("label") or "").strip()
+        if len(lab) > 42:
+            lab = lab[:39] + "..."
+
+        if use_lane_nodes:
+            lanes_here = sorted(list(entity_to_lanes.get(eid, set())))
+            lane_disp = ", ".join(lanes_here) if lanes_here else "unassigned"
+        else:
+            lane_disp = lane_attr if lane_attr else "no lane"
+
+        label = f"{eid} [{typ}] ({lane_disp})"
+        if lab:
+            label += f" — {lab}"
+        opts_list.append({"label": label, "value": eid})
+
+    opts_list = sorted(opts_list, key=lambda x: x["value"])
+    valid = {o["value"] for o in opts_list}
+    new_value = current_value if current_value in valid else None
+    return opts_list, new_value
+
+
+@app.callback(
     Output("rel_select","options"),
     Output("flt_focus_node","options"),
     Output("fact_sub","options"),
@@ -1011,7 +1163,6 @@ def refresh_graph(m, filters):
     Input("store_template","data"),
 )
 def refresh_dropdowns(m, tmpl):
-    ent_ids = sorted([e["id"] for e in m.get("entities", [])])
     rels = sorted(list((m.get("relations") or {}).keys()), key=lambda x: (-len(x), x))
     ent_opts = entity_options(m)
 
@@ -1025,7 +1176,7 @@ def refresh_dropdowns(m, tmpl):
     else:
         sub_opts, obj_opts = ent_opts, ent_opts
 
-    return opts(ent_ids), opts(rels), ent_opts, sub_opts, obj_opts
+    return opts(rels), ent_opts, sub_opts, obj_opts
 
 @app.callback(
     Output("ent_id","value"),
@@ -1227,19 +1378,24 @@ def mod_visibility(pred, m):
         return show(True), show(False), show(False), show(False), show(True), show(False), show(False), "REFACTORS: requires FROM, optional WITH."
     return show(False), show(False), show(False), show(False), show(False), show(False), show(False), "No modifiers needed for this predicate."
 
-# Layout rerun
+# Layout rerun (auto when model changes or when button clicked)
 @app.callback(
     Output("cy","layout"),
     Output("store_status","data", allow_duplicate=True),
+    Input("store_model","data"),
     Input("btn_layout","n_clicks"),
-    Input("rank_dir","value"),
+    State("rank_dir","value"),
     prevent_initial_call=True,
 )
-def rerun_layout(_n, rank_dir):
+def rerun_layout(_m, _n, rank_dir):
+    # Dash Cytoscape doesn't always re-run layout on element updates.
+    # By emitting a fresh layout dict whenever the model changes, new nodes become visible immediately.
     rank_dir = rank_dir or "LR"
     layout = {"name":"dagre","rankDir":rank_dir,"nodeSep":50,"edgeSep":10,"rankSep":70,"padding":10}
-    return layout, f"Re-ran layout ({rank_dir})."
-
+    triggered = callback_context.triggered[0]["prop_id"].split(".")[0] if callback_context.triggered else None
+    if triggered == "btn_layout":
+        return layout, f"Re-ran layout ({rank_dir})."
+    return layout, "Auto-layout after model change."
 # Fact selection -> load
 @app.callback(
     Output("store_fact_edit","data"),
@@ -1302,6 +1458,7 @@ def clear_fact_edit(_n):
     Output("store_status","data", allow_duplicate=True),
     Output("store_fact_edit","data", allow_duplicate=True),
     Output("facts_table","selected_rows", allow_duplicate=True),
+    Output("store_filters","data", allow_duplicate=True),
     Input("btn_ent_add","n_clicks"),
     Input("btn_ent_upd","n_clicks"),
     Input("btn_ent_del","n_clicks"),
@@ -1358,6 +1515,7 @@ def mutate_model(
     m = deepcopy(m)
     sel = sel or {"edge": None, "tapped_node": None, "tapped_pos": None}
     fact_edit = fact_edit or {"index": None}
+    filters_out = deepcopy(filters or {})
     edit_idx = fact_edit.get("index")
     triggered = callback_context.triggered[0]["prop_id"].split(".")[0]
 
@@ -1406,33 +1564,55 @@ def mutate_model(
         eid = (ent_id or "").strip()
         et = (ent_type or "").strip()
         if not eid or not et:
-            return m, "Entity needs ID and Type.", {"index": None}, []
+            return m, "Entity needs ID and Type.", {"index": None}, [], filters_out
         if find_entity(m, eid):
-            return m, f"Entity '{eid}' already exists.", {"index": None}, []
-        m["entities"].append({"id": eid, "type": et, "label": (ent_label or "").strip(), "lane": (ent_lane or "").strip()})
-        return m, f"Added entity: {eid}", {"index": None}, []
+            return m, f"Entity '{eid}' already exists.", {"index": None}, [], filters_out
+
+        # Add entity
+        m["entities"].append({
+            "id": eid,
+            "type": et,
+            "label": (ent_label or "").strip(),
+            "lane": (ent_lane or "").strip()
+        })
+
+        # If a Type filter is active, extend it so the newly added type isn't hidden.
+        tf = list(filters_out.get("type_filter") or [])
+        if tf and et not in tf:
+            tf.append(et)
+            filters_out["type_filter"] = tf
+
+        # If the new entity is still hidden (e.g., focus mode or search), focus it so it appears.
+        kept_ids, _ = compute_kept_ids_and_facts(m, filters_out)
+        status = f"Added entity: {eid}"
+        if eid not in kept_ids:
+            filters_out["focus_node"] = eid
+            status += " (shown via focus; it was hidden by current filters/search)"
+
+        return m, status, {"index": None}, [], filters_out
+
 
     if triggered == "btn_ent_upd":
         if not ent_select:
-            return m, "Select an entity first.", {"index": None}, []
+            return m, "Select an entity first.", {"index": None}, [], filters_out
         e = find_entity(m, ent_select)
         if not e:
-            return m, "Entity not found.", {"index": None}, []
+            return m, "Entity not found.", {"index": None}, [], filters_out
         new_id = (ent_id or "").strip() or ent_select
         if new_id != ent_select:
             if find_entity(m, new_id):
-                return m, f"Cannot rename: '{new_id}' already exists.", {"index": None}, []
+                return m, f"Cannot rename: '{new_id}' already exists.", {"index": None}, [], filters_out
             rename_entity_id(m, ent_select, new_id)
             ent_select = new_id
             e = find_entity(m, ent_select)
         e["type"] = (ent_type or e.get("type","")).strip()
         e["label"] = (ent_label or "").strip()
         e["lane"] = (ent_lane or "").strip()
-        return m, f"Updated entity: {ent_select}", {"index": None}, []
+        return m, f"Updated entity: {ent_select}", {"index": None}, [], filters_out
 
     if triggered == "btn_ent_del":
         if not ent_select:
-            return m, "Select an entity first.", {"index": None}, []
+            return m, "Select an entity first.", {"index": None}, [], filters_out
         eid = ent_select
         m["entities"] = [e for e in m["entities"] if e["id"] != eid]
         new_facts = []
@@ -1445,54 +1625,54 @@ def mutate_model(
                 continue
             new_facts.append(f)
         m["facts"] = new_facts
-        return m, f"Deleted entity: {eid} (and related facts)", {"index": None}, []
+        return m, f"Deleted entity: {eid} (and related facts)", {"index": None}, [], filters_out
 
     # Relations
     if triggered == "btn_rel_add":
         name = (rel_name or "").strip()
         if not name:
-            return m, "Relation needs a name.", {"index": None}, []
+            return m, "Relation needs a name.", {"index": None}, [], filters_out
         if name in (m.get("relations") or {}):
-            return m, f"Relation '{name}' already exists.", {"index": None}, []
+            return m, f"Relation '{name}' already exists.", {"index": None}, [], filters_out
         m["relations"][name] = {"sub_types": parse_csv(rel_sub_types), "obj_types": parse_csv(rel_obj_types), "kind": rel_kind or "binary"}
-        return m, f"Added relation: {name}", {"index": None}, []
+        return m, f"Added relation: {name}", {"index": None}, [], filters_out
 
     if triggered == "btn_rel_upd":
         if not rel_select:
-            return m, "Select a relation first.", {"index": None}, []
+            return m, "Select a relation first.", {"index": None}, [], filters_out
         m["relations"][rel_select] = {"sub_types": parse_csv(rel_sub_types), "obj_types": parse_csv(rel_obj_types), "kind": rel_kind or "binary"}
-        return m, f"Updated relation: {rel_select}", {"index": None}, []
+        return m, f"Updated relation: {rel_select}", {"index": None}, [], filters_out
 
     if triggered == "btn_rel_del":
         if not rel_select:
-            return m, "Select a relation first.", {"index": None}, []
+            return m, "Select a relation first.", {"index": None}, [], filters_out
         m["relations"].pop(rel_select, None)
         m["facts"] = [f for f in m["facts"] if f["pred"] != rel_select]
-        return m, f"Deleted relation: {rel_select} (and related facts)", {"index": None}, []
+        return m, f"Deleted relation: {rel_select} (and related facts)", {"index": None}, [], filters_out
 
     # Facts add
     if triggered == "btn_fact_add":
         fact, err = build_fact(fact_pred, fact_sub, fact_obj)
         if err:
-            return m, err, {"index": None}, []
+            return m, err, {"index": None}, [], filters_out
         if is_duplicate_fact(m, fact):
-            return m, "Duplicate fact detected (not added).", {"index": None}, []
+            return m, "Duplicate fact detected (not added).", {"index": None}, [], filters_out
         m["facts"].append(fact)
-        return m, f"Added fact: {fact_sub} {fact_pred} {fact_obj}", {"index": None}, []
+        return m, f"Added fact: {fact_sub} {fact_pred} {fact_obj}", {"index": None}, [], filters_out
 
     # Facts update
     if triggered == "btn_fact_update":
         if edit_idx is None:
-            return m, "Select a fact row in the table to edit.", {"index": None}, []
+            return m, "Select a fact row in the table to edit.", {"index": None}, [], filters_out
         if not (0 <= int(edit_idx) < len(m.get("facts") or [])):
-            return m, "Edit index out of range.", {"index": None}, []
+            return m, "Edit index out of range.", {"index": None}, [], filters_out
         fact, err = build_fact(fact_pred, fact_sub, fact_obj)
         if err:
-            return m, err, {"index": None}, []
+            return m, err, {"index": None}, [], filters_out
         if is_duplicate_fact(m, fact, ignore_index=int(edit_idx)):
-            return m, "Duplicate fact detected (update cancelled).", {"index": None}, []
+            return m, "Duplicate fact detected (update cancelled).", {"index": None}, [], filters_out
         m["facts"][int(edit_idx)] = fact
-        return m, f"Updated fact #{edit_idx}.", {"index": None}, []
+        return m, f"Updated fact, filters_out  #{edit_idx}.", {"index": None}, []
 
     # Facts delete selected edge (reliable: deletes by GLOBAL fact index factg_<gidx>)
     # ALSO supports deleting the fact currently loaded from the Facts table (edit_idx).
@@ -1504,59 +1684,61 @@ def mutate_model(
             try:
                 gidx = int(edge_id.split("_", 1)[1])
             except Exception:
-                return m, "Could not parse selected fact id.", {"index": None}, []
+                return m, "Could not parse selected fact id.", {"index": None}, [], filters_out
             if 0 <= gidx < len(m["facts"]):
                 f = m["facts"].pop(gidx)
-                return m, f"Deleted fact #{gidx}: {f['sub']} {f['pred']} {f['obj']}", {"index": None}, []
-            return m, "Selected fact index out of range.", {"index": None}, []
+                return m, f"Deleted fact, filters_out  #{gidx}: {f['sub']} {f['pred']} {f['obj']}", {"index": None}, []
+            return m, "Selected fact index out of range.", {"index": None}, [], filters_out
 
         # 2) Fallback: if a row was selected in the Facts table (loaded into editor), delete that
         if edit_idx is not None and 0 <= int(edit_idx) < len(m["facts"]):
             gidx = int(edit_idx)
             f = m["facts"].pop(gidx)
-            return m, f"Deleted fact (from table) #{gidx}: {f['sub']} {f['pred']} {f['obj']}", {"index": None}, []
+            return m, f"Deleted fact (from table), filters_out  #{gidx}: {f['sub']} {f['pred']} {f['obj']}", {"index": None}, []
 
-        return m, "Select a FACT edge in the graph OR select a row in the Facts table first.", {"index": None}, []
+        return m, "Select a FACT edge in the graph OR select a row in the Facts table first.", {"index": None}, [], filters_out
 
     # Save position
     if triggered == "btn_save_pos":
         nid = (sel or {}).get("tapped_node")
         pos = (sel or {}).get("tapped_pos")
         if not nid or not isinstance(pos, dict):
-            return m, "Tap a node first.", {"index": None}, []
+            return m, "Tap a node first.", {"index": None}, [], filters_out
         e = find_entity(m, nid)
         if not e:
-            return m, "Tapped node not found.", {"index": None}, []
+            return m, "Tapped node not found.", {"index": None}, [], filters_out
         e["pos"] = {"x": pos.get("x", 0), "y": pos.get("y", 0)}
-        return m, f"Stored position for {nid}.", {"index": None}, []
+        return m, f"Stored position for {nid}.", {"index": None}, [], filters_out
 
     # Save (backup)
     if triggered == "btn_save":
         backup_path = save_model_with_backup(m)
-        return m, f"Saved model.json (backup: {backup_path})", {"index": None}, []
+        return m, f"Saved model.json (backup: {backup_path})", {"index": None}, [], filters_out
 
     # Export full
     if triggered == "btn_export":
         export_graphml_yed_simple(m, GRAPHML_OUT)
-        return m, f"Exported GraphML (full) to {GRAPHML_OUT}", {"index": None}, []
+        return m, f"Exported GraphML (full) to {GRAPHML_OUT}", {"index": None}, [], filters_out
 
     # Focus here + export (uses tapped node as focus, then exports focused GraphML)
     if triggered == "btn_focus_export":
         nid = (sel or {}).get("tapped_node")
         if not nid:
-            return m, "Click a node first, then Focus+Export.", {"index": None}, []
+            return m, "Click a node first, then Focus+Export.", {"index": None}, [], filters_out
         filters2 = deepcopy(filters or {})
         filters2["focus_node"] = nid
         sub = extract_submodel(m, filters2)
         export_graphml_yed_simple(sub, GRAPHML_FOCUS_OUT)
-        return m, f"Focused export created: {GRAPHML_FOCUS_OUT} (focus={nid})", {"index": None}, []
+        return m, f"Focused export created: {GRAPHML_FOCUS_OUT} (focus={nid})", {"index": None}, [], filters_out
 
     # Export focused
     if triggered == "btn_export_focus":
         sub = extract_submodel(m, filters or {})
         export_graphml_yed_simple(sub, GRAPHML_FOCUS_OUT)
         focus_node = (filters or {}).get("focus_node")
-        return m, f"Exported GraphML (focused) to {GRAPHML_FOCUS_OUT} (focus={focus_node})", {"index": None}, []
+        return m, f"Exported GraphML (focused) to {GRAPHML_FOCUS_OUT} (focus={focus_node})", {"index": None}, [], filters_out
 
-    return m, "Ready.", {"index": None}, []
+    return m, "Ready.", {"index": None}, [], filters_out
 
+if __name__ == "__main__":
+    app.run(debug=(os.environ.get("DASH_DEBUG","0") == "1"))
