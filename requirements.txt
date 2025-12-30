@@ -1,6 +1,5 @@
 dash
 dash_cytoscape
 pathlib
-os
 datetime
 copy
