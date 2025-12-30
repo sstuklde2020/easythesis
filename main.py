@@ -1,3 +1,11 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "dash",
+#   "dash_cytoscape",
+# ]
+# ///
+
 import json
 from pathlib import Path
 from copy import deepcopy
